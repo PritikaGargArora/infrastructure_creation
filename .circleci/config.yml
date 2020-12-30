@@ -11,7 +11,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file template.yml \
-              --stack-name my-stack-pritika
+              --stack-name my-stack
            
 workflows:
   my_workflow:
