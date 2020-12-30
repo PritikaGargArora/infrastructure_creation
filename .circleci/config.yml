@@ -11,12 +11,12 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file template.yml \
-              --stack-name my-stack
+              --stack-name my-stack-pritika
       - run: return 1
       - run:
           name: Destroy environment
           command: |
-            aws cloudformation delete-stack --stack-name my-stack
+            aws cloudformation delete-stack --stack-name my-stack-pritika
           when: on_fail        
            
 workflows:
