@@ -1,39 +1,73 @@
 version: 2.1
 
 jobs:
-  create_infrastructure:
-    docker:
-      - image: amazon/aws-cli
-    steps:
-      - checkout
-      - run:
-          name: Ensure backend infrastructure exist
-          command: |
-            aws cloudformation deploy \
-              --template-file template.yml \
-              --stack-name my-stack-pritika
+  #create_infrastructure:
+   # docker:
+    #  - image: amazon/aws-cli
+    #steps:
+    #  - checkout
+     # - run:
+     #     name: Ensure backend infrastructure exist
+     #     command: |
+     #       aws cloudformation deploy \
+      #        --template-file template.yml \
+       #       --stack-name my-stack-pritika
       #- run: return 1
       #- run:
       #    name: Destroy environment
       #    command: |
       #      aws cloudformation delete-stack --stack-name my-stack-pritika
       #    when: on_fail
-  populate_inventory:
+  #populate_inventory:
+   # docker:
+     # - image: amazon/aws-cli
+    #steps:
+     # - checkout
+     # - run:
+      #    name: Ensure backend infrastructure exist
+       #   command: |
+        #    aws ec2 describe-instances \
+        #      --query 'Reservations[*].Instances[*].PublicIpAddress' \
+         #     --output text >> inventory
+  configure_infrastructure:
     docker:
-      - image: amazon/aws-cli
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
+      - add_ssh_keys:
+          fingerprints: ["f6:4c:63:0c:99:a3:cc:47:34:77:be:68:7a:00:6f:a7"]
       - run:
-          name: Ensure backend infrastructure exist
+          name: Install dependencies
           command: |
-            aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --output text >> inventory         
+            apk add --update ansible # install the dependencies needed for your playbook
+      - run:
+          name: Configure server
+          command: |
+            ansible-playbook -i inventory main-remote.yml
+  smoke_test:
+    docker:
+      - image: alpine:latest
+    steps:
+      - run: apk add --update curl
+      - run:
+          name: smoke test.
+          command: |
+            URL="https://blog.udacity.com/"
+            if curl -s --head ${URL} # test if blog.udacity. com exists
+            then
+              return 0
+            else
+              return 1
+            fi       
            
 workflows:
   my_workflow:
     jobs:
-      - create_infrastructure
-      - populate_inventory:
+      #- create_infrastructure
+      #- populate_inventory:
+          #requires:
+            #- create_infrastructure
+       - configure_infrastructure
+       - smoke_test:
           requires:
-            - create_infrastructure
+            - configure_infrastructure     
