@@ -12,12 +12,23 @@ jobs:
             aws cloudformation deploy \
               --template-file template.yml \
               --stack-name my-stack-pritika
-      - run: return 1
+      #- run: return 1
+      #- run:
+      #    name: Destroy environment
+      #    command: |
+      #      aws cloudformation delete-stack --stack-name my-stack-pritika
+      #    when: on_fail
+  populate_inventory:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
       - run:
-          name: Destroy environment
+          name: Ensure backend infrastructure exist
           command: |
-            aws cloudformation delete-stack --stack-name my-stack-pritika
-          when: on_fail        
+            aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --output text >> inventory         
            
 workflows:
   my_workflow:
